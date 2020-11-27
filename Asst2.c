@@ -8,10 +8,16 @@
 
 // linked list struct
 
+typedef struct node{
+  char *name;
+  struct node *next;
+} node;
+
 typedef struct linkedlist{
 
   char *name;
   int tokens;
+  node *n;
   struct linkedlist *next;
 
 } list;
@@ -22,6 +28,18 @@ pthread_mutex_t mut;
 list database;
 
 // functions
+
+void addFile(char *file){
+
+  // adds file to database
+
+}
+
+void addToken(char *file, char *token){
+
+  // adds token to database
+
+}
 
 void *fileHandler(void *input){
 
