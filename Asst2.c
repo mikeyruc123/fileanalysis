@@ -10,7 +10,7 @@
 
 typedef struct node{
   char *name;
-  double occurance;
+  double occurence;
   struct node *next;
 } node;
 
@@ -27,18 +27,76 @@ typedef struct linkedlist{
 
 pthread_mutex_t mut;
 list database;
+int isEmpty = 1;
 
 // functions
 
 void addFile(char *file){
-
-  // adds file to database
+// adds file to database
+	// needs mutex lock
+	list *cur = &database;
+	if(isEmpty)
+	{
+		database.name = file;
+		database.tokens = 0;
+		database.n = NULL;
+		database.next = NULL;
+		isEmpty = 0;
+		return;
+	}
+	while(cur->next != NULL)
+	{
+		cur = cur->next;
+	}
+	cur->next = malloc(sizeof(list));
+	cur->next->name = file;
+	cur->next->tokens = 0;
+	cur->next->n = NULL;
+	cur->next->next = NULL;
+	return;
 
 }
 
 void addToken(char *file, char *token){
+// adds token to database
+	// assumes file exists
+	list *cur = &database;
+	while(strcmp(cur->name, file) != 0)
+	{
+		cur = cur->next;	
+	}
 
-  // adds token to database
+	node *cur_token = cur->n;
+
+	if(cur_token == NULL)
+	{
+		cur->n = malloc(sizeof(node));
+		cur->n->name = token;
+		cur->n->occurence++;
+		cur->n->next = NULL;
+		return;
+	}
+
+	while(strcmp(cur_token->name, token) != 0 && cur_token->next != NULL)
+	{
+		cur_token = cur_token->next;	
+	}
+
+	if(strcmp(cur_token->name, token) == 0)
+	{
+		cur->tokens++;
+		cur_token->occurence++;
+	}
+
+	else
+	{
+		cur->tokens++;
+		cur_token->next = malloc(sizeof(node));
+		cur_token->next->name = token;
+		cur_token->next->occurence++;
+		cur_token->next->next = NULL;	
+	}
+	return;
 
 }
 
