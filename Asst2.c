@@ -10,6 +10,7 @@
 
 typedef struct node{
   char *name;
+  double occurance;
   struct node *next;
 } node;
 
