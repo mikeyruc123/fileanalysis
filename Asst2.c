@@ -123,6 +123,22 @@ void *fileHandler(void *input){
 
   struct dirent *current = input;
 
+  char *buf;
+
+  FILE *fp = fopen(input, "r");
+  addFile(input);
+
+  int i = 0;
+  while (fscanf(fp, "%s", buf) != EOF){
+
+    for (i = 0; i < strlen(buf), i++){
+      buf[i] = tolower(buf[i]);
+    }
+
+    addToken(input, buf);
+
+  }
+
   return NULL;
 
 }
