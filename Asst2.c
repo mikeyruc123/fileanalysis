@@ -54,7 +54,7 @@ void addFile(char *file){
 	cur->next->tokens = 0;
 	cur->next->n = NULL;
 	cur->next->next = NULL;
-  pthread_mutex_unlock(mut);
+	pthread_mutex_unlock(mut);
 	return;
 
 }
