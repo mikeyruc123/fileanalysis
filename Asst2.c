@@ -38,7 +38,8 @@ void addFile(char *file){
 	list *cur = &database;
 	if(isEmpty)
 	{
-		database.name = file;
+		database.name = malloc(sizeof(file));
+		strcpy(database.name, file);
 		database.tokens = 0;
 		database.n = NULL;
 		database.next = NULL;
@@ -50,7 +51,8 @@ void addFile(char *file){
 		cur = cur->next;
 	}
 	cur->next = malloc(sizeof(list));
-	cur->next->name = file;
+	cur->next->name = malloc(sizeof(file));
+	strcpy(cur->next->name, file);
 	cur->next->tokens = 0;
 	cur->next->n = NULL;
 	cur->next->next = NULL;
@@ -73,7 +75,8 @@ void addToken(char *file, char *token){
 	if(cur_token == NULL)
 	{
 		cur->n = malloc(sizeof(node));
-		cur->n->name = token;
+		cur->n->name = mallloc(sizeof(token));
+		strcpy(cur->n->name, token);
 		cur->n->occurence++;
 		cur->n->next = NULL;
 		return;
@@ -94,7 +97,8 @@ void addToken(char *file, char *token){
 	{
 		cur->tokens++;
 		cur_token->next = malloc(sizeof(node));
-		cur_token->next->name = token;
+		cur_token->next->name = malloc(sizeof(token));
+		strcpy(cur_token->next->name, token);
 		cur_token->next->occurence++;
 		cur_token->next->next = NULL;
 	}
