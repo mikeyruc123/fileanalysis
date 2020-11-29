@@ -78,7 +78,7 @@ void addToken(char *file, char *token){
 	list *cur = &database;
 	while(strcmp(cur->name, file) != 0)
 	{
-		cur = cur->next;
+		cur = cur->next;	
 	}
 
 	node *cur_token = cur->n;
@@ -86,16 +86,27 @@ void addToken(char *file, char *token){
 	if(cur_token == NULL)
 	{
 		cur->n = malloc(sizeof(node));
-		cur->n->name = mallloc(sizeof(token));
+		cur->n->name = malloc(sizeof(token));
 		strcpy(cur->n->name, token);
 		cur->n->occurence++;
 		cur->n->next = NULL;
+		cur->tokens++;
 		return;
 	}
-
-	while(strcmp(cur_token->name, token) != 0 && cur_token->next != NULL)
+	if(strcmp(cur_token->name, token) > 0)
 	{
-		cur_token = cur_token->next;
+		node *new_node = malloc(sizeof(node));
+		new_node->name = malloc(sizeof(token));
+		strcpy(new_node->name, token);
+		new_node->occurence++;
+		new_node->next = cur_token;
+		cur->tokens++;
+		cur->n = new_node;
+	}
+
+	while(strcmp(cur_token->name, token) != 0 && cur_token->next != NULL && strcmp(cur_token->next->name, token) < 0)
+	{
+		cur_token = cur_token->next;	
 	}
 
 	if(strcmp(cur_token->name, token) == 0)
@@ -104,14 +115,24 @@ void addToken(char *file, char *token){
 		cur_token->occurence++;
 	}
 
-	else
+	else if (cur_token->next == NULL)
 	{
 		cur->tokens++;
 		cur_token->next = malloc(sizeof(node));
 		cur_token->next->name = malloc(sizeof(token));
 		strcpy(cur_token->next->name, token);
 		cur_token->next->occurence++;
-		cur_token->next->next = NULL;
+		cur_token->next->next = NULL;	
+	}
+	else
+	{
+		node *new_node = malloc(sizeof(node));
+		new_node->name = malloc(sizeof(token));
+		strcpy(new_node->name, token);
+		new_node->occurence++;
+		cur->tokens++;
+		new_node->next = cur_token->next;
+		cur_token->next = new_node;
 	}
 	return;
 
