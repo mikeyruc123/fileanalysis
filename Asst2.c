@@ -5,6 +5,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <math.h>
 
 // linked list struct
 
@@ -22,6 +23,16 @@ typedef struct linkedlist{
   struct linkedlist *next;
 
 } list;
+
+typedef struct JSD_list
+{
+	double value;
+	char *file1;
+	char *file2;
+	int TotalTokens;
+	struct JSD_list *next;
+
+}JSD_list;
 
 // global variables
 
@@ -157,5 +168,246 @@ int main(int argc, char **argv){
   pthread_create(a, NULL, dirHandler, (void *)directory);
 
   pthread_barrier_wait(&bar);
+	
+	list *cur = &database;
+	JSD_list answers;
+	JSD_list *head = &answers;
+	JSD_list *ptr = &answers;
+	int size = 0;
+	
+
+	while(cur != NULL)
+	{
+		list *pair = cur->next;
+		while(pair != NULL)
+		{
+			int meanEmpty = 1'
+			node meanTokens;
+			node *meanptr = &meanTokens;
+			node cur_token = cur->n;
+			node pair_token = pair->n;
+			while(cur_token != NULL)
+			{
+				meanptr = &meanTokens;
+				if(meanEmpty)
+				{
+					strcpy(meanTokens.name, cur_token->name);
+					meanTokens.meanProb+=(cur_token->occurence / cur->tokens);
+					meanTokens.next = NULL;
+					meanEmpty = 0;
+				}
+				else
+				{
+					while(meanptr != NULL)
+					{
+						if(strcmp(meanptr->name, cur_token->name) == 0)
+						{
+							meanptr->meanProb += (cur_token->occurence / cur->tokens);
+							break;
+						}
+						else if(meanptr->next == NULL)
+						{
+							meanptr->next = malloc(sizeof(node));
+							strcpy(meanptr->next->name, cur_token->name);
+							meanptr->next->meanProb += (cur_token->occurence / cur->tokens);
+							meanptr->next->next = NULL;
+							break;
+						}
+						else
+						{
+							meanptr = meanptr->next;
+						}
+					}		
+				}
+				cur_token = cur_token->next
+			}
+			while(pair_token != NULL)
+			{
+				meanptr = &meanTokens;
+				if(meanEmpty)
+				{
+					strcpy(meanTokens.name, pair_token->name);
+					meanTokens.meanProb+=(pair_token->occurence / pair->tokens);
+					meanTokens.next = NULL;
+					meanEmpty = 0;
+				}
+				else
+				{
+					while(meanptr != NULL)
+					{
+						if(strcmp(meanptr->name, pair_token->name) == 0)
+						{
+							meanptr->meanProb += (pair_token->occurence / pair->tokens);
+							break;
+						}
+						else if(meanptr->next == NULL)
+						{
+							meanptr->next = malloc(sizeof(node));
+							strcpy(meanptr->next->name, pair_token->name);
+							meanptr->next->meanProb += (pair_token->occurence / pair->tokens);
+							meanptr->next->next = NULL;
+							break;
+						}
+						else
+						{
+							meanptr = meanptr->next;
+						}
+					}		
+				}
+				pair_token = pair_token->next
+			}
+			meanptr = &meanTokens;
+			while(meanptr !=NULL)
+			{
+				meanptr->meanProb/=2;
+				meanptr = meanptr->next;
+			}
+			double curKLD= 0;
+			double pairKLD= 0;
+			cur_token = cur->n;
+			pair_token = pair->n;
+			while(cur_token != NULL)
+			{
+				meanptr = &meanTokens;
+				while(meanptr!=NULL)
+				{
+					if(strcmp(cur_token->name, meanptr->name) == 0)
+					{
+						double FirstX = cur_token->occurence / cur->tokens;
+						double MeanX = meanptr->meanProb;
+						curKLD += FirstX(log(FirstX/MeanX));
+						break;
+					}
+					else
+					{
+						meanptr = meanptr->next;
+					}
+				}
+				cur_token = cur_token->next;
+			}
+			while(pair_token != NULL)
+			{
+				meanptr = &meanTokens;
+				while(meanptr!=NULL)
+				{
+					if(strcmp(pair_token->name, meanptr->name) == 0)
+					{
+						double SecondX = pair_token->occurence / pair->tokens;
+						double MeanX = meanptr->meanProb;
+						pairKLD += SecondX(log(SecondX/MeanX));
+						break;
+					}
+					else
+					{
+						meanptr = meanptr->next;
+					}
+				}
+				pair_token = pair_token->next;
+			}
+			double JSD = (curKLD + pairKLD)/2;
+			ptr = head;
+			if(size == 0)
+			{
+				answers.value = JSD;
+				strcpy(answers.file1, cur->name);
+				strcpy(answers.file2, pair->name);
+				answers.TotalTokens = cur->tokens + pair->tokens;
+				answers.next = NULL
+				
+			}
+			else if(cur->tokens + pair->tokens < head->TotalTokens)
+			{
+				JSD_list *new_head = malloc(sizeof(JSD_list));
+				new_head->value = JSD;
+				strcpy(new_head->file1, cur->name);
+				strcpy(new_head->file2, pair->name);
+				new_head->TotalTokens = cur->tokens + pair->tokens;
+				new_head->next = head;
+				head = new_head;	
+			}
+			else
+			{
+				while(ptr->next != NULL && ptr->next->TotalTokens < (cur->tokens + pair->tokens))
+				{
+					ptr = ptr->next;
+				}
+				if(ptr->next == NULL)
+				{
+					JSD_list *new_node = malloc(sizeof(JSD_list));
+					new_node->value = JSD;
+					strcpy(new_node->file1, cur->name);
+					strcpy(new_node->file2, pair->name);
+					new_node->TotalTokens = cur->tokens + pair->tokens;
+					new_node->next = NULL;
+					ptr->next = new_node;
+				}
+				else
+				{
+					JSD_list *new_node = malloc(sizeof(JSD_list));
+					new_node->value = JSD;
+					strcpy(new_node->file1, cur->name);
+					strcpy(new_node->file2, pair->name);
+					new_node->TotalTokens = cur->tokens + pair->tokens;
+					new_node->next = ptr->next;
+					ptr->next = new_node;
+				}
+			}
+			size++;
+			pair = pair->next;
+			
+		}
+		cur = cur->next
+	}
+	ptr = head;
+	while(ptr != NULL)
+	{
+		double value = ptr->value;
+		if(value >= 0 && value <= 0.1)
+		{
+			//print value in red
+			printf(“\033[0;31m”);
+			printf("%d" , value);
+			printf(“\033[0m”);
+		}
+		if(value > 0.1 && value <= 0.15)
+		{
+			//print value in yellow
+			printf(“\033[0;33m”);
+			printf("%d" , value);
+			printf(“\033[0m”);
+		}
+		if(value > 0.15 && value <= 0.2)
+		{
+			//print value in green
+			printf(“\033[0;32m”);
+			printf("%d" , value);
+			printf(“\033[0m”);
+		}
+		if(value > 0.2 && value <= 0.25)
+		{
+			//print value in cyan
+			printf(“\033[0;36m”);
+			printf("%d" , value);
+			printf(“\033[0m”);
+		}
+		if(value > 0.25 && value <= 0.3)
+		{
+			//print value in blue
+			printf(“\033[0;34m”);
+			printf("%d" , value);
+			printf(“\033[0m”);
+		}
+		if(value > 0.3)
+		{
+			//print value in white
+			printf(“\033[0;37m”);
+			printf("%d" , value);
+			printf(“\033[0m”);
+		}
+		printf("%s%s\n" , " \"" + ptr->file1 + "\" " + "and \"" + ptr->file2 + "\"");
+		ptr = ptr->next;
+	}
+	return 0;
+	
 
 }
