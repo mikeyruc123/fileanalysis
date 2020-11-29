@@ -170,6 +170,7 @@ int main(int argc, char **argv){
   pthread_barrier_wait(&bar);
 	
 	list *cur = &database;
+
 	JSD_list answers;
 	JSD_list *head = &answers;
 	JSD_list *ptr = &answers;
@@ -191,6 +192,7 @@ int main(int argc, char **argv){
 				meanptr = &meanTokens;
 				if(meanEmpty)
 				{
+					meanTokens.name = malloc(sizeof(cur_token->name));
 					strcpy(meanTokens.name, cur_token->name);
 					meanTokens.meanProb+=(cur_token->occurence / cur->tokens);
 					meanTokens.next = NULL;
@@ -208,6 +210,7 @@ int main(int argc, char **argv){
 						else if(meanptr->next == NULL)
 						{
 							meanptr->next = malloc(sizeof(node));
+							meanptr->next->name = malloc(sizeof(cur_token->name));
 							strcpy(meanptr->next->name, cur_token->name);
 							meanptr->next->meanProb += (cur_token->occurence / cur->tokens);
 							meanptr->next->next = NULL;
@@ -226,6 +229,7 @@ int main(int argc, char **argv){
 				meanptr = &meanTokens;
 				if(meanEmpty)
 				{
+					meanTokens.name = malloc(sizeof(pair_token->name));
 					strcpy(meanTokens.name, pair_token->name);
 					meanTokens.meanProb+=(pair_token->occurence / pair->tokens);
 					meanTokens.next = NULL;
@@ -243,6 +247,7 @@ int main(int argc, char **argv){
 						else if(meanptr->next == NULL)
 						{
 							meanptr->next = malloc(sizeof(node));
+							meanptr->next->name = malloc(sizeof(pair_token->name));
 							strcpy(meanptr->next->name, pair_token->name);
 							meanptr->next->meanProb += (pair_token->occurence / pair->tokens);
 							meanptr->next->next = NULL;
@@ -309,6 +314,8 @@ int main(int argc, char **argv){
 			if(size == 0)
 			{
 				answers.value = JSD;
+				answers.file1 = malloc(sizeof(cur->name));
+				answers.file2 = malloc(sizeof(pair->name));
 				strcpy(answers.file1, cur->name);
 				strcpy(answers.file2, pair->name);
 				answers.TotalTokens = cur->tokens + pair->tokens;
@@ -319,6 +326,8 @@ int main(int argc, char **argv){
 			{
 				JSD_list *new_head = malloc(sizeof(JSD_list));
 				new_head->value = JSD;
+				new_head->file1 = malloc(sizeof(cur->name));
+				new_head->file2 = malloc(sizeof(pair->name));
 				strcpy(new_head->file1, cur->name);
 				strcpy(new_head->file2, pair->name);
 				new_head->TotalTokens = cur->tokens + pair->tokens;
@@ -335,6 +344,8 @@ int main(int argc, char **argv){
 				{
 					JSD_list *new_node = malloc(sizeof(JSD_list));
 					new_node->value = JSD;
+					new_node->file1 = malloc(sizeof(cur->name));
+					new_node->file2 = malloc(sizeof(pair->name));
 					strcpy(new_node->file1, cur->name);
 					strcpy(new_node->file2, pair->name);
 					new_node->TotalTokens = cur->tokens + pair->tokens;
@@ -345,6 +356,8 @@ int main(int argc, char **argv){
 				{
 					JSD_list *new_node = malloc(sizeof(JSD_list));
 					new_node->value = JSD;
+					new_node->file1 = malloc(sizeof(cur->name));
+					new_node->file2 = malloc(sizeof(pair->name));
 					strcpy(new_node->file1, cur->name);
 					strcpy(new_node->file2, pair->name);
 					new_node->TotalTokens = cur->tokens + pair->tokens;
