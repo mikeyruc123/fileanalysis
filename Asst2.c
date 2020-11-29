@@ -11,7 +11,8 @@
 
 typedef struct node{
   char *name;
-  double occurence;
+  double occurence = 0;
+  double meanProb = 0;
   struct node *next;
 } node;
 
@@ -19,7 +20,7 @@ typedef struct linkedlist{
 
   char *name;
   int tokens;
-  node *n;
+  node *n; 
   struct linkedlist *next;
 
 } list;
@@ -75,7 +76,6 @@ void addFile(char *file){
 void addToken(char *file, char *token){
 // adds token to database
 	// assumes file exists
-	//pthread_mutex_lock(mut);
 	list *cur = &database;
 	while(strcmp(cur->name, file) != 0)
 	{
@@ -135,7 +135,6 @@ void addToken(char *file, char *token){
 		new_node->next = cur_token->next;
 		cur_token->next = new_node;
 	}
-	//pthread_mutex_unlock(mut);
 	return;
 
 }
@@ -222,8 +221,8 @@ int main(int argc, char **argv){
 			int meanEmpty = 1;
 			node meanTokens;
 			node *meanptr = &meanTokens;
-			node cur_token = cur->n;
-			node pair_token = pair->n;
+			node *cur_token = cur->n;
+			node *pair_token = pair->n;
 			while(cur_token != NULL)
 			{
 				meanptr = &meanTokens;
@@ -296,7 +295,7 @@ int main(int argc, char **argv){
 						}
 					}		
 				}
-				pair_token = pair_token->next
+				pair_token = pair_token->next;
 			}
 			meanptr = &meanTokens;
 			while(meanptr !=NULL)
@@ -317,7 +316,7 @@ int main(int argc, char **argv){
 					{
 						double FirstX = cur_token->occurence / cur->tokens;
 						double MeanX = meanptr->meanProb;
-						curKLD += FirstX(log(FirstX/MeanX));
+						curKLD += FirstX * (log(FirstX/MeanX));
 						break;
 					}
 					else
@@ -336,7 +335,7 @@ int main(int argc, char **argv){
 					{
 						double SecondX = pair_token->occurence / pair->tokens;
 						double MeanX = meanptr->meanProb;
-						pairKLD += SecondX(log(SecondX/MeanX));
+						pairKLD += SecondX * (log(SecondX/MeanX));
 						break;
 					}
 					else
@@ -356,7 +355,7 @@ int main(int argc, char **argv){
 				strcpy(answers.file1, cur->name);
 				strcpy(answers.file2, pair->name);
 				answers.TotalTokens = cur->tokens + pair->tokens;
-				answers.next = NULL
+				answers.next = NULL;
 				
 			}
 			else if(cur->tokens + pair->tokens < head->TotalTokens)
@@ -406,7 +405,7 @@ int main(int argc, char **argv){
 			pair = pair->next;
 			
 		}
-		cur = cur->next
+		cur = cur->next;
 	}
 	ptr = head;
 	while(ptr != NULL)
@@ -415,46 +414,40 @@ int main(int argc, char **argv){
 		if(value >= 0 && value <= 0.1)
 		{
 			//print value in red
-			printf(“\033[0;31m”);
-			printf("%d" , value);
-			printf(“\033[0m”);
+			printf("%f%s", value, "\x1B[31m");
+			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.1 && value <= 0.15)
 		{
 			//print value in yellow
-			printf(“\033[0;33m”);
-			printf("%d" , value);
-			printf(“\033[0m”);
+			printf("%f%s", value, "\x1B[33m");
+			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.15 && value <= 0.2)
 		{
 			//print value in green
-			printf(“\033[0;32m”);
-			printf("%d" , value);
-			printf(“\033[0m”);
+			printf("%f%s", value, "\x1B[32m");
+			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.2 && value <= 0.25)
 		{
 			//print value in cyan
-			printf(“\033[0;36m”);
-			printf("%d" , value);
-			printf(“\033[0m”);
+			printf("%f%s", value, "\x1B[36m");
+			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.25 && value <= 0.3)
 		{
 			//print value in blue
-			printf(“\033[0;34m”);
-			printf("%d" , value);
-			printf(“\033[0m”);
+			printf("%f%s", value, "\x1B[34m");
+			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.3)
 		{
 			//print value in white
-			printf(“\033[0;37m”);
-			printf("%d" , value);
-			printf(“\033[0m”);
+			printf("%f%s", value, "\x1B[37m");
+			printf("%s" , "\x1B[0m");
 		}
-		printf("%s%s\n" , " \"" + ptr->file1 + "\" " + "and \"" + ptr->file2 + "\"");
+		printf("%s%s%s%s%s%s\n" , " \"" , ptr->file1 , "\" " , "and \"" , ptr->file2 , "\"");
 		ptr = ptr->next;
 	}
 	return 0;
