@@ -160,8 +160,6 @@ void *dirHandler(void *input){
     }
   }
 
-  pthread_barrier_wait(&bar);
-
   return NULL;
 
 }
