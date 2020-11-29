@@ -181,7 +181,7 @@ int main(int argc, char **argv){
 		list *pair = cur->next;
 		while(pair != NULL)
 		{
-			int meanEmpty = 1'
+			int meanEmpty = 1;
 			node meanTokens;
 			node *meanptr = &meanTokens;
 			node cur_token = cur->n;
