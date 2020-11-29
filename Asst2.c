@@ -75,6 +75,7 @@ void addFile(char *file){
 void addToken(char *file, char *token){
 // adds token to database
 	// assumes file exists
+	//pthread_mutex_lock(mut);
 	list *cur = &database;
 	while(strcmp(cur->name, file) != 0)
 	{
@@ -134,6 +135,7 @@ void addToken(char *file, char *token){
 		new_node->next = cur_token->next;
 		cur_token->next = new_node;
 	}
+	//pthread_mutex_unlock(mut);
 	return;
 
 }
