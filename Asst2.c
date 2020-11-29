@@ -26,6 +26,7 @@ typedef struct linkedlist{
 // global variables
 
 pthread_mutex_t mut;
+pthread_barrier_t bar;
 list database;
 int isEmpty = 1;
 
@@ -33,7 +34,7 @@ int isEmpty = 1;
 
 void addFile(char *file){
 // adds file to database
-	// needs mutex lock
+	pthread_mutex_lock(mut);
 	list *cur = &database;
 	if(isEmpty)
 	{
@@ -53,6 +54,7 @@ void addFile(char *file){
 	cur->next->tokens = 0;
 	cur->next->n = NULL;
 	cur->next->next = NULL;
+  pthread_mutex_unlock(mut);
 	return;
 
 }
@@ -63,7 +65,7 @@ void addToken(char *file, char *token){
 	list *cur = &database;
 	while(strcmp(cur->name, file) != 0)
 	{
-		cur = cur->next;	
+		cur = cur->next;
 	}
 
 	node *cur_token = cur->n;
@@ -79,7 +81,7 @@ void addToken(char *file, char *token){
 
 	while(strcmp(cur_token->name, token) != 0 && cur_token->next != NULL)
 	{
-		cur_token = cur_token->next;	
+		cur_token = cur_token->next;
 	}
 
 	if(strcmp(cur_token->name, token) == 0)
@@ -94,7 +96,7 @@ void addToken(char *file, char *token){
 		cur_token->next = malloc(sizeof(node));
 		cur_token->next->name = token;
 		cur_token->next->occurence++;
-		cur_token->next->next = NULL;	
+		cur_token->next->next = NULL;
 	}
 	return;
 
@@ -127,6 +129,8 @@ void *dirHandler(void *input){
     }
   }
 
+  pthread_barrier_wait(&bar);
+
   return NULL;
 
 }
@@ -135,6 +139,8 @@ int main(int argc, char **argv){
 
   // check the given path to see if it is valid or accessable
 
+  pthread_mutex_init(&mut, NULL);
+
   DIR *directory = opendir(argv[1]);
 
   if (directory == NULL) {
@@ -142,6 +148,10 @@ int main(int argc, char **argv){
     return 1;
   }
 
-  dirHandler((void *)directory);
+  pthread_t *a;
+
+  pthread_create(a, NULL, dirHandler, (void *)directory);
+
+  pthread_barrier_wait(&bar);
 
 }
