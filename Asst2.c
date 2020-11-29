@@ -153,10 +153,10 @@ void *dirHandler(void *input){
     if (current->d_type == DT_DIR){
       // start new pthread
       pthread_t *id;
-      pthread_create(id, NULL, dirHandler, NULL);
+      pthread_create(id, NULL, dirHandler, (void *)current->d_name);
     } else if (current->d_type == DT_REG) {
       pthread_t *id;
-      pthread_create(id, NULL, fileHandler, NULL);
+      pthread_create(id, NULL, fileHandler, (void *)current->d_name);
     }
   }
 
