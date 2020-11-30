@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+#include <sched.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -68,13 +70,19 @@ void ladd(pthread_t id){
 
 void printList(list l){
 
-  puts("called");
+  //puts("called");
 
   list *cur = &l;
+  node *cur2 = cur->n;
+
+  int i;
 
   while (cur != NULL){
 
     printf("%s\n", cur->name);
+    for (cur2 = cur->n; cur2 != NULL; cur2 = cur2->next){
+      printf("%s\n", cur2->name);
+    }
     cur = cur->next;
 
   }
@@ -114,6 +122,7 @@ void addFile(char *file){
 void addToken(char *file, char *token){
 // adds token to database
 	// assumes file exists
+        //puts("called");
 	list *cur = &database;
 	while(strcmp(cur->name, file) != 0)
 	{
@@ -124,6 +133,7 @@ void addToken(char *file, char *token){
 
 	if(cur_token == NULL)
 	{
+                //printf("New token: %s\n", token);
 		cur->n = malloc(sizeof(node));
 		cur->n->name = malloc(sizeof(token));
 		strcpy(cur->n->name, token);
@@ -134,6 +144,7 @@ void addToken(char *file, char *token){
 	}
 	if(strcmp(cur_token->name, token) > 0)
 	{
+                //printf("New token: %s\n", token);                
 		node *new_node = malloc(sizeof(node));
 		new_node->name = malloc(sizeof(token));
 		strcpy(new_node->name, token);
@@ -141,9 +152,10 @@ void addToken(char *file, char *token){
 		new_node->next = cur_token;
 		cur->tokens++;
 		cur->n = new_node;
+                return;
 	}
 
-	while(strcmp(cur_token->name, token) != 0 && cur_token->next != NULL && strcmp(cur_token->next->name, token) < 0)
+	while(strcmp(cur_token->name, token) != 0 && cur_token->next != NULL && strcmp(cur_token->next->name, token) <= 0)
 	{
 		cur_token = cur_token->next;	
 	}
@@ -152,19 +164,24 @@ void addToken(char *file, char *token){
 	{
 		cur->tokens++;
 		cur_token->occurence++;
+                return;
 	}
 
 	else if (cur_token->next == NULL)
 	{
+                //printf("New token: %s\n", token);
 		cur->tokens++;
 		cur_token->next = malloc(sizeof(node));
 		cur_token->next->name = malloc(sizeof(token));
 		strcpy(cur_token->next->name, token);
 		cur_token->next->occurence = 1;
-		cur_token->next->next = NULL;	
+		cur_token->next->next = NULL;
+                return;	
 	}
 	else
 	{
+                //printf("New token: %s\n", token);
+                //printf("Comparison between: %s and: %s. Value: %d", cur_token->name, token, strcmp(cur_token->name, token));
 		node *new_node = malloc(sizeof(node));
 		new_node->name = malloc(sizeof(token));
 		strcpy(new_node->name, token);
@@ -179,23 +196,35 @@ void addToken(char *file, char *token){
 
 void *fileHandler(void *input){
 
+  char *a = malloc(sizeof(input));
+  strcpy(a, (char *)input);
+
   // assume file is valid (DT_REG) and accessable
+
+  //printf("%s", (char *)input);
 
   char *buf = malloc(1024);
 
-  FILE *fp = fopen((char *)input, "r");
-  if (fp == NULL) return;
-
   addFile((char *)input);
+  //printf("Second: %s\n", a);
+
+  FILE *fp = fopen(a, "r");
+  if (fp == NULL) return;
+  
+  
 
   int i = 0;
-  fscanf(fp, "%s", &buf);
+  while (fscanf(fp, "%s", buf) != EOF){
 
-    //for (i = 0; i < strlen(buf); i++){
-      //buf[i] = tolower(buf[i]);
-    //}
+    for (i = 0; i < strlen(buf); i++){
+      buf[i] = tolower(buf[i]);
+    }
 
-    //addToken(input, buf);
+    //printf("%s", buf);
+
+    addToken(input, buf);
+
+  }
 
   pthread_exit(NULL);
   return NULL;
@@ -205,6 +234,10 @@ void *fileHandler(void *input){
 void *dirHandler(void *input){
 
   DIR *directory = input;
+
+  chdir(directory);
+
+  if (directory == NULL) return;
 
   struct dirent *current;
   current = readdir(directory);
@@ -217,7 +250,8 @@ void *dirHandler(void *input){
     } else if (current->d_type == DT_DIR){
       // start new pthread
       pthread_t id;
-      pthread_create(&id, NULL, dirHandler, (void *)current->d_name);
+      pthread_create(&id, NULL, dirHandler, (void *)opendir(current->d_name));
+      //printf("First: %s\n", current->d_name);
       ladd(id);
     } else if (current->d_type == DT_REG) {
       pthread_t id;
@@ -236,9 +270,11 @@ int main(int argc, char **argv){
 
   // check the given path to see if it is valid or accessable
 
+  chdir(argv[1]);
+
   pthread_mutex_init(&mut, NULL);
 
-  DIR *directory = opendir(argv[1]);
+  DIR *directory = opendir("./");
 
   if (directory == NULL) {
     printf("%s\n", "Error: Invalid or inaccessable directory");
@@ -259,9 +295,11 @@ int main(int argc, char **argv){
   }
 
   //printList(database);
+
+  //printf("1: %s 2: %s 3: %s\n", database.n->name, database.next->n->name, database.next->next->n->name);
 	//printf("test");
 	
-	/* list *cur = &database;
+	list *cur = &database;
 
 	JSD_list answers;
 	JSD_list *head = &answers;
@@ -372,7 +410,7 @@ int main(int argc, char **argv){
 					{
 						double FirstX = cur_token->occurence / cur->tokens;
 						double MeanX = meanptr->meanProb;
-						curKLD += FirstX * (log(FirstX/MeanX));
+						curKLD += FirstX * (log(FirstX/MeanX) / log(2));
 						break;
 					}
 					else
@@ -391,7 +429,7 @@ int main(int argc, char **argv){
 					{
 						double SecondX = pair_token->occurence / pair->tokens;
 						double MeanX = meanptr->meanProb;
-						pairKLD += SecondX * (log(SecondX/MeanX));
+						pairKLD += SecondX * (log(SecondX/MeanX) / log(2));
 						break;
 					}
 					else
@@ -505,7 +543,7 @@ int main(int argc, char **argv){
 		}
 		printf("%s%s%s%s%s%s\n" , " \"" , ptr->file1 , "\" " , "and \"" , ptr->file2 , "\"");
 		ptr = ptr->next;
-	} */
+	}
 	return 0;
 	
 
