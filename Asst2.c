@@ -6,13 +6,14 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <math.h>
+#include <ctype.h>
 
 // linked list struct
 
 typedef struct node{
   char *name;
-  double occurence = 0;
-  double meanProb = 0;
+  double occurence;
+  double meanProb;
   struct node *next;
 } node;
 
@@ -46,7 +47,7 @@ int isEmpty = 1;
 
 void addFile(char *file){
 // adds file to database
-	pthread_mutex_lock(mut);
+	pthread_mutex_lock(&mut);
 	list *cur = &database;
 	if(isEmpty)
 	{
@@ -68,7 +69,7 @@ void addFile(char *file){
 	cur->next->tokens = 0;
 	cur->next->n = NULL;
 	cur->next->next = NULL;
-	pthread_mutex_unlock(mut);
+	pthread_mutex_unlock(&mut);
 	return;
 
 }
@@ -89,7 +90,7 @@ void addToken(char *file, char *token){
 		cur->n = malloc(sizeof(node));
 		cur->n->name = malloc(sizeof(token));
 		strcpy(cur->n->name, token);
-		cur->n->occurence++;
+		cur->n->occurence = 1;
 		cur->n->next = NULL;
 		cur->tokens++;
 		return;
@@ -99,7 +100,7 @@ void addToken(char *file, char *token){
 		node *new_node = malloc(sizeof(node));
 		new_node->name = malloc(sizeof(token));
 		strcpy(new_node->name, token);
-		new_node->occurence++;
+		new_node->occurence = 1;
 		new_node->next = cur_token;
 		cur->tokens++;
 		cur->n = new_node;
@@ -122,7 +123,7 @@ void addToken(char *file, char *token){
 		cur_token->next = malloc(sizeof(node));
 		cur_token->next->name = malloc(sizeof(token));
 		strcpy(cur_token->next->name, token);
-		cur_token->next->occurence++;
+		cur_token->next->occurence = 1;
 		cur_token->next->next = NULL;	
 	}
 	else
@@ -130,7 +131,7 @@ void addToken(char *file, char *token){
 		node *new_node = malloc(sizeof(node));
 		new_node->name = malloc(sizeof(token));
 		strcpy(new_node->name, token);
-		new_node->occurence++;
+		new_node->occurence = 1;
 		cur->tokens++;
 		new_node->next = cur_token->next;
 		cur_token->next = new_node;
@@ -143,9 +144,9 @@ void *fileHandler(void *input){
 
   // assume file is valid (DT_REG) and accessable
 
-  struct dirent *current = input;
+  
 
-  char *buf;
+  char *buf = malloc(256);
 
   FILE *fp = fopen(input, "r");
   addFile(input);
@@ -153,7 +154,7 @@ void *fileHandler(void *input){
   int i = 0;
   while (fscanf(fp, "%s", buf) != EOF){
 
-    for (i = 0; i < strlen(buf), i++){
+    for (i = 0; i < strlen(buf); i++){
       buf[i] = tolower(buf[i]);
     }
 
@@ -170,16 +171,18 @@ void *dirHandler(void *input){
   DIR *directory = input;
 
   struct dirent *current;
-  while ((current = readdir(directory)) != NULL){
+current = readdir(directory);
+  while (current != NULL){
 
     if (current->d_type == DT_DIR){
       // start new pthread
-      pthread_t *id;
-      pthread_create(id, NULL, dirHandler, (void *)current->d_name);
+      pthread_t id;
+      pthread_create(&id, NULL, dirHandler, (void *)current->d_name);
     } else if (current->d_type == DT_REG) {
-      pthread_t *id;
-      pthread_create(id, NULL, fileHandler, (void *)current->d_name);
+      pthread_t id;
+      pthread_create(&id, NULL, fileHandler, (void *)current->d_name);
     }
+	current = readdir(directory);
   }
 
   return NULL;
@@ -195,17 +198,18 @@ int main(int argc, char **argv){
   DIR *directory = opendir(argv[1]);
 
   if (directory == NULL) {
-    printf("%s", "Error: Invalid or inaccessable directory");
+    printf("%s\n", "Error: Invalid or inaccessable directory");
     return 1;
   }
 
-  pthread_t *a;
+  pthread_t a;
 
-  pthread_create(a, NULL, dirHandler, (void *)directory);
+  pthread_create(&a, NULL, dirHandler, (void *)directory);
 
   pthread_barrier_wait(&bar);
+	printf("test");
 	
-	list *cur = &database;
+	/*list *cur = &database;
 
 	JSD_list answers;
 	JSD_list *head = &answers;
@@ -230,7 +234,7 @@ int main(int argc, char **argv){
 				{
 					meanTokens.name = malloc(sizeof(cur_token->name));
 					strcpy(meanTokens.name, cur_token->name);
-					meanTokens.meanProb+=(cur_token->occurence / cur->tokens);
+					meanTokens.meanProb =(cur_token->occurence / cur->tokens);
 					meanTokens.next = NULL;
 					meanEmpty = 0;
 				}
@@ -248,7 +252,7 @@ int main(int argc, char **argv){
 							meanptr->next = malloc(sizeof(node));
 							meanptr->next->name = malloc(sizeof(cur_token->name));
 							strcpy(meanptr->next->name, cur_token->name);
-							meanptr->next->meanProb += (cur_token->occurence / cur->tokens);
+							meanptr->next->meanProb = (cur_token->occurence / cur->tokens);
 							meanptr->next->next = NULL;
 							break;
 						}
@@ -258,7 +262,7 @@ int main(int argc, char **argv){
 						}
 					}		
 				}
-				cur_token = cur_token->next
+				cur_token = cur_token->next;
 			}
 			while(pair_token != NULL)
 			{
@@ -267,7 +271,7 @@ int main(int argc, char **argv){
 				{
 					meanTokens.name = malloc(sizeof(pair_token->name));
 					strcpy(meanTokens.name, pair_token->name);
-					meanTokens.meanProb+=(pair_token->occurence / pair->tokens);
+					meanTokens.meanProb =(pair_token->occurence / pair->tokens);
 					meanTokens.next = NULL;
 					meanEmpty = 0;
 				}
@@ -285,7 +289,7 @@ int main(int argc, char **argv){
 							meanptr->next = malloc(sizeof(node));
 							meanptr->next->name = malloc(sizeof(pair_token->name));
 							strcpy(meanptr->next->name, pair_token->name);
-							meanptr->next->meanProb += (pair_token->occurence / pair->tokens);
+							meanptr->next->meanProb = (pair_token->occurence / pair->tokens);
 							meanptr->next->next = NULL;
 							break;
 						}
@@ -414,42 +418,42 @@ int main(int argc, char **argv){
 		if(value >= 0 && value <= 0.1)
 		{
 			//print value in red
-			printf("%f%s", value, "\x1B[31m");
+			printf("%s%f", "\x1B[31m", value);
 			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.1 && value <= 0.15)
 		{
 			//print value in yellow
-			printf("%f%s", value, "\x1B[33m");
+			printf("%s%f", "\x1B[33m", value);
 			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.15 && value <= 0.2)
 		{
 			//print value in green
-			printf("%f%s", value, "\x1B[32m");
+			printf("%s%f", "\x1B[32m", value);
 			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.2 && value <= 0.25)
 		{
 			//print value in cyan
-			printf("%f%s", value, "\x1B[36m");
+			printf("%s%f", "\x1B[36m", value);
 			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.25 && value <= 0.3)
 		{
 			//print value in blue
-			printf("%f%s", value, "\x1B[34m");
+			printf("%s%f", "\x1B[34m", value);
 			printf("%s" , "\x1B[0m");
 		}
 		if(value > 0.3)
 		{
 			//print value in white
-			printf("%f%s", value, "\x1B[37m");
+			printf("%s%f", "\x1B[37m", value);
 			printf("%s" , "\x1B[0m");
 		}
 		printf("%s%s%s%s%s%s\n" , " \"" , ptr->file1 , "\" " , "and \"" , ptr->file2 , "\"");
 		ptr = ptr->next;
-	}
+	}*/
 	return 0;
 	
 
