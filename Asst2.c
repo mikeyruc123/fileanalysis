@@ -233,9 +233,11 @@ void *fileHandler(void *input){
 
 void *dirHandler(void *input){
 
-  DIR *directory = input;
+  chdir((char *)input);
 
-  chdir(directory);
+  DIR *directory = opendir("./");  
+
+  //chdir(directory);
 
   if (directory == NULL) return;
 
@@ -250,7 +252,7 @@ void *dirHandler(void *input){
     } else if (current->d_type == DT_DIR){
       // start new pthread
       pthread_t id;
-      pthread_create(&id, NULL, dirHandler, (void *)opendir(current->d_name));
+      pthread_create(&id, NULL, dirHandler, (void *)current->d_name);
       //printf("First: %s\n", current->d_name);
       ladd(id);
     } else if (current->d_type == DT_REG) {
