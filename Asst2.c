@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <ctype.h>
+#include <limits.h>
 
 // linked list struct
 
@@ -26,6 +27,11 @@ typedef struct linkedlist{
 
 } list;
 
+struct ll{
+    pthread_t id;
+    struct ll *next;
+ };
+
 typedef struct JSD_list
 {
 	double value;
@@ -42,8 +48,38 @@ pthread_mutex_t mut;
 pthread_barrier_t bar;
 list database;
 int isEmpty = 1;
+struct ll threads;
 
 // functions
+
+void ladd(pthread_t id){
+
+  struct ll *cur = &threads;
+  struct ll *prev;
+  while (cur != NULL){
+    prev = cur;
+    cur = cur->next;
+  }
+
+  prev->next = malloc(sizeof(struct ll));
+  prev->next->id = id;
+
+}
+
+void printList(list l){
+
+  puts("called");
+
+  list *cur = &l;
+
+  while (cur != NULL){
+
+    printf("%s\n", cur->name);
+    cur = cur->next;
+
+  }
+
+}
 
 void addFile(char *file){
 // adds file to database
@@ -57,6 +93,7 @@ void addFile(char *file){
 		database.n = NULL;
 		database.next = NULL;
 		isEmpty = 0;
+                pthread_mutex_unlock(&mut);
 		return;
 	}
 	while(cur->next != NULL)
@@ -144,24 +181,23 @@ void *fileHandler(void *input){
 
   // assume file is valid (DT_REG) and accessable
 
-  
+  char *buf = malloc(1024);
 
-  char *buf = malloc(256);
+  FILE *fp = fopen((char *)input, "r");
+  if (fp == NULL) return;
 
-  FILE *fp = fopen(input, "r");
-  addFile(input);
+  addFile((char *)input);
 
   int i = 0;
-  while (fscanf(fp, "%s", buf) != EOF){
+  fscanf(fp, "%s", &buf);
 
-    for (i = 0; i < strlen(buf); i++){
-      buf[i] = tolower(buf[i]);
-    }
+    //for (i = 0; i < strlen(buf); i++){
+      //buf[i] = tolower(buf[i]);
+    //}
 
-    addToken(input, buf);
+    //addToken(input, buf);
 
-  }
-
+  pthread_exit(NULL);
   return NULL;
 
 }
@@ -171,20 +207,27 @@ void *dirHandler(void *input){
   DIR *directory = input;
 
   struct dirent *current;
-current = readdir(directory);
+  current = readdir(directory);
   while (current != NULL){
 
-    if (current->d_type == DT_DIR){
+    //printf("%s\n", current->d_name);
+
+    if (current->d_name[0] == '.'){
+      // do nothing
+    } else if (current->d_type == DT_DIR){
       // start new pthread
       pthread_t id;
       pthread_create(&id, NULL, dirHandler, (void *)current->d_name);
+      ladd(id);
     } else if (current->d_type == DT_REG) {
       pthread_t id;
       pthread_create(&id, NULL, fileHandler, (void *)current->d_name);
+      ladd(id);
     }
-	current = readdir(directory);
+    current = readdir(directory);
   }
-
+  //pthread_join(pthread_self(), NULL);
+  pthread_exit(NULL);
   return NULL;
 
 }
@@ -202,14 +245,23 @@ int main(int argc, char **argv){
     return 1;
   }
 
-  pthread_t a;
+  pthread_t dirH;
+  pthread_create(&dirH, NULL, dirHandler, (void *)directory);
+  ladd(dirH);
 
-  pthread_create(&a, NULL, dirHandler, (void *)directory);
+  struct ll *current = &threads;
 
-  pthread_barrier_wait(&bar);
-	printf("test");
+  if (current == NULL) puts("BAD");
+
+  while (current != NULL){
+    pthread_join(current->id, NULL);
+    current = current->next;
+  }
+
+  //printList(database);
+	//printf("test");
 	
-	/*list *cur = &database;
+	/* list *cur = &database;
 
 	JSD_list answers;
 	JSD_list *head = &answers;
@@ -453,7 +505,7 @@ int main(int argc, char **argv){
 		}
 		printf("%s%s%s%s%s%s\n" , " \"" , ptr->file1 , "\" " , "and \"" , ptr->file2 , "\"");
 		ptr = ptr->next;
-	}*/
+	} */
 	return 0;
 	
 
