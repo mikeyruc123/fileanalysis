@@ -29,7 +29,7 @@ typedef struct linkedlist{
 
 } list;
 
-struct ll{
+struct ll{ // rudimentary linked list to keep track of threads; implemented somewhat hastily 
     pthread_t id;
     struct ll *next;
  };
@@ -54,7 +54,7 @@ struct ll threads;
 
 // functions
 
-void ladd(pthread_t id){
+void ladd(pthread_t id){  // adds id of thread to linked list
 
   struct ll *cur = &threads;
   struct ll *prev;
@@ -68,7 +68,7 @@ void ladd(pthread_t id){
 
 }
 
-void printList(list l){
+void printList(list l){  // used for debugging, prints out every entry in the database holding files and tokens
 
   //puts("called");
 
@@ -89,7 +89,7 @@ void printList(list l){
 
 }
 
-void addFile(char *file){
+void addFile(char *file){   // adds the name of a file to the database
 // adds file to database
 	pthread_mutex_lock(&mut);
 	list *cur = &database;
@@ -119,7 +119,7 @@ void addFile(char *file){
 
 }
 
-void addToken(char *file, char *token){
+void addToken(char *file, char *token){   // adds a token to the corresponding file in the database; inserts alphabetically and skips repeat tokens
 // adds token to database
 	// assumes file exists
         //puts("called");
@@ -194,7 +194,7 @@ void addToken(char *file, char *token){
 
 }
 
-void *fileHandler(void *input){
+void *fileHandler(void *input){   // handles files; adds them and their tokens to the database using addToken and addFile
 
   char *a = malloc(sizeof(input));
   strcpy(a, (char *)input);
@@ -231,8 +231,10 @@ void *fileHandler(void *input){
 
 }
 
-void *dirHandler(void *input){
+void *dirHandler(void *input){  // handles directories; changest working directory for new folders
 
+  unshare(CLONE_FS);
+	
   chdir((char *)input);
 
   DIR *directory = opendir("./");  
